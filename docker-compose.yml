@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  # Microservice
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    depends_on:
+      - postgres_master
+      - mongo_primary
+      - redis
+
+  # PostgreSQL databases
+  postgres_master:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: master_user
+      POSTGRES_PASSWORD: master_password
+      POSTGRES_DB: master_db
+    volumes:
+      - postgres_master_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  postgres_slave:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: slave_user
+      POSTGRES_PASSWORD: slave_password
+      POSTGRES_DB: slave_db
+    volumes:
+      - postgres_slave_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    deploy:
+      replicas: 4
+
+  # MongoDB databases
+  mongo_primary:
+    image: mongo:latest
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_primary_data:/data/db
+
+  mongo_secondary:
+    image: mongo:latest
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo_secondary_data:/data/db
+    deploy:
+      replicas: 4
+
+  # Redis cluster
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_master_data:
+  postgres_slave_data:
+  mongo_primary_data:
+  mongo_secondary_data:
