@@ -6,3 +6,4 @@ redis
 flask-swagger-ui
 retry
 requests
+ jsonschema

@@ -2,6 +2,7 @@ version: '3.11'
 
 services:
   app:
+    image: annachiriciuc07/app:latest
     build:
       context: .
       dockerfile: Dockerfile
@@ -23,7 +24,7 @@ services:
       - REDIS_URL=redis://redis:6379/0
 
   postgres_master:
-    image: postgres:latest
+    image: annachiriciuc07/postgres_master:latest
     environment:
       POSTGRES_USER: master_user
       POSTGRES_PASSWORD: master_password
@@ -36,7 +37,7 @@ services:
       - "5432:5432"
 
   postgres_slave1:
-    image: postgres:latest
+    image: annachiriciuc07/postgres_slave1:latest
     environment:
       POSTGRES_USER: replication_user
       POSTGRES_PASSWORD: replication_password
@@ -50,7 +51,7 @@ services:
       - "5433:5432"
 
   postgres_slave2:
-    image: postgres:latest
+    image: annachiriciuc07/postgres_slave2:latest
     environment:
       POSTGRES_USER: replication_user
       POSTGRES_PASSWORD: replication_password
@@ -64,7 +65,7 @@ services:
       - "5434:5432"
 
   postgres_slave3:
-    image: postgres:latest
+    image: annachiriciuc07/postgres_slave3:latest
     environment:
       POSTGRES_USER: replication_user
       POSTGRES_PASSWORD: replication_password
@@ -78,7 +79,7 @@ services:
       - "5435:5432"
 
   mongo_primary:
-    image: mongo:latest
+    image: annachiriciuc07/mongo_primary:latest
     command: [ "mongod", "--bind_ip_all", "--dbpath=/data/db", "--oplogSize=100" ]
     ports:
       - "27017:27017"
@@ -86,7 +87,7 @@ services:
       - mongo_primary_data:/data/db
 
   mongo_secondary1:
-    image: mongo:latest
+    image: annachiriciuc07/mongo_secondary1:latest
     command: ["mongod", "--bind_ip_all", "--dbpath=/data/db", "--oplogSize=100"]
     ports:
       - "27018:27017"
@@ -94,7 +95,7 @@ services:
       - mongo_secondary1_data:/data/db
 
   mongo_secondary2:
-    image: mongo:latest
+    image: annachiriciuc07/mongo_secondary2:latest
     command: ["mongod", "--bind_ip_all", "--dbpath=/data/db", "--oplogSize=100"]
     ports:
       - "27019:27017"
@@ -102,7 +103,7 @@ services:
       - mongo_secondary2_data:/data/db
 
   mongo_secondary3:
-    image: mongo:latest
+    image: annachiriciuc07/mongo_secondary3:latest
     command: ["mongod", "--bind_ip_all", "--dbpath=/data/db", "--oplogSize=100"]
     ports:
       - "27020:27017"
@@ -110,7 +111,7 @@ services:
       - mongo_secondary3_data:/data/db
 
   redis:
-    image: redis:latest
+    image: annachiriciuc07/redis:latest
     ports:
       - "6379:6379"
 

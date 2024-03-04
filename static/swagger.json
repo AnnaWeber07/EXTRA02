@@ -1,61 +1,96 @@
 {
-  "swagger": "2.0",
+  "openapi": "3.0.0",
   "info": {
     "title": "Flask API",
-    "description": "API documentation for the Flask application",
-    "version": "1.0"
+    "version": "1.0.0",
+    "description": "API documentation for the Flask application"
   },
-  "basePath": "/",
-  "schemes": [
-    "http"
+  "servers": [
+    {
+      "url": "http://localhost:5000",
+      "description": "Local development server"
+    }
   ],
   "paths": {
-    "/two-phase-commit": {
-      "post": {
-        "summary": "Two-Phase Commit Logic",
-        "description": "Endpoint to execute two-phase commit logic",
+    "/users": {
+      "get": {
+        "summary": "Get all users",
         "responses": {
           "200": {
-            "description": "Two-Phase Commit Logic executed successfully",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "message": {
-                  "type": "string"
-                }
+            "description": "Returns a JSON object with users from PostgreSQL, MongoDB, and Redis"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  }
+                },
+                "required": ["name", "email"]
               }
             }
           },
-          "500": {
-            "description": "One or more databases are not ready"
+          "responses": {
+            "200": {
+              "description": "User created successfully"
+            },
+            "500": {
+              "description": "Internal Server Error"
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update a user's email",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  }
+                },
+                "required": ["name", "email"]
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "User updated successfully"
+            },
+            "500": {
+              "description": "Internal Server Error"
+            }
           }
         }
       }
     },
     "/content": {
       "get": {
-        "summary": "Get MongoDB Content",
-        "description": "Endpoint to retrieve content from MongoDB",
+        "summary": "Get all content from MongoDB",
         "responses": {
           "200": {
-            "description": "List of MongoDB content",
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "id": {
-                    "type": "string"
-                  },
-                  "title": {
-                    "type": "string"
-                  },
-                  "content": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
+            "description": "Returns a JSON array of content from MongoDB"
           },
           "500": {
             "description": "Internal Server Error"
@@ -63,64 +98,75 @@
         }
       },
       "post": {
-        "summary": "Create MongoDB Content",
-        "description": "Endpoint to create content in MongoDB",
-        "parameters": [
-          {
-            "name": "data",
-            "in": "body",
-            "description": "Content data to be inserted into MongoDB",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "title": {
-                  "type": "string"
+        "summary": "Create new content in MongoDB",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  }
                 },
-                "content": {
-                  "type": "string"
-                }
-              },
-              "required": ["title", "content"]
+                "required": ["name", "email", "title"]
+              }
             }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Content created successfully in MongoDB"
           },
-          "500": {
-            "description": "Internal Server Error"
+          "responses": {
+            "200": {
+              "description": "Data inserted successfully"
+            },
+            "500": {
+              "description": "Internal Server Error"
+            }
           }
         }
       },
       "put": {
-        "summary": "Update MongoDB Content",
-        "description": "Endpoint to update content in MongoDB",
-        "parameters": [
-          {
-            "name": "data",
-            "in": "body",
-            "description": "Content data to be updated in MongoDB",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "title": {
-                  "type": "string"
+        "summary": "Update content in MongoDB",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "content": {
+                    "type": "string"
+                  }
                 },
-                "content": {
-                  "type": "string"
-                }
-              },
-              "required": ["title", "content"]
+                "required": ["title", "content"]
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Content updated successfully"
+            },
+            "500": {
+              "description": "Internal Server Error"
             }
           }
-        ],
+        }
+      }
+    },
+    "/two-phase-commit": {
+      "post": {
+        "summary": "Execute two-phase commit logic",
         "responses": {
           "200": {
-            "description": "Content updated successfully in MongoDB"
-          },
-          "500": {
-            "description": "Internal Server Error"
+            "description": "Two-phase commit logic executed successfully"
           }
         }
       }

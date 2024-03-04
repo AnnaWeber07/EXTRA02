@@ -99,31 +99,62 @@ def replicate_postgres_data():
     except Exception as e:
         print("Error replicating PostgreSQL data:", str(e))
 
-# Routes for Users
-@app.route('/users', methods=['GET'])
-def get_users():
+# Function to get users from Redis
+def get_redis_users():
     try:
-        cursor = postgres_master_conn.cursor()
-        cursor.execute("SELECT * FROM users")
-        users_pg = cursor.fetchall()
-        cursor.close()
-
-        # Get users from MongoDB
-        content = mongo_collection.find()
-        users_mongo = [json.loads(json_util.dumps(doc)) for doc in content]
-
-        # Get users from Redis (just an example)
         users_redis = []
         redis_keys = redis_client.keys("*")
         for key in redis_keys:
             user_data = redis_client.hgetall(key)
             users_redis.append(user_data)
+        return users_redis
+    except Exception as e:
+        print("Error getting users from Redis:", str(e))
+        return []
 
-        return jsonify({
+# Function to cache users in Redis
+def cache_users_in_redis(users):
+    try:
+        for user in users:
+            key = user['_id']['$oid']
+            redis_client.hmset(key, user)
+        print("Users cached in Redis successfully")
+    except Exception as e:
+        print("Error caching users in Redis:", str(e))
+
+# Routes for Users
+@app.route('/users', methods=['GET'])
+def get_users():
+    try:
+        # Check if users are cached in Redis
+        cached_users = get_redis_users()
+        if cached_users:
+            print("Users retrieved from Redis cache")
+            return jsonify({"Redis Users": cached_users})
+
+        # If not cached, get users from PostgreSQL and MongoDB
+        cursor = postgres_master_conn.cursor()
+        cursor.execute("SELECT * FROM users")
+        users_pg = cursor.fetchall()
+        cursor.close()
+
+        content = mongo_collection.find()
+        users_mongo = [json.loads(json_util.dumps(doc)) for doc in content]
+
+        # Combine users from both databases
+        all_users = {
             "PostgreSQL Users": users_pg,
             "MongoDB Users": users_mongo,
-            "Redis Users": users_redis
-        })
+            "Redis Users": users_pg
+        }
+
+        # Cache users in Redis for future requests
+        cache_users_in_redis(all_users.get("MongoDB Users", []))
+
+        # Replicate data to PostgreSQL slave
+        replicate_postgres_data()
+
+        return jsonify(all_users)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -135,7 +166,10 @@ def create_user():
         cursor.execute("INSERT INTO users (name, email) VALUES (%s, %s)", (data['name'], data['email']))
         postgres_master_conn.commit()
         cursor.close()
-        replicate_postgres_data()  # Replicate data after inserting
+
+        # Replicate data to PostgreSQL slave
+        replicate_postgres_data()
+
         return jsonify({"message": "User created successfully"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -148,7 +182,10 @@ def update_user():
         cursor.execute("UPDATE users SET email = %s WHERE name = %s", (data['email'], data['name']))
         postgres_master_conn.commit()
         cursor.close()
-        replicate_postgres_data()  # Replicate data after updating
+
+        # Replicate data to PostgreSQL slave
+        replicate_postgres_data()
+
         return jsonify({"message": "User updated successfully"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -167,14 +204,11 @@ def get_content():
 def create_mongo_data():
     try:
         data = request.json
-        # Generate a random UUID as the initial title
-        data['title'] = str(uuid.uuid4())
+        data['title'] = str(uuid.uuid4())  # Generate a unique title
 
-        # Check if the generated title already exists in the collection
         while mongo_collection.find_one({'title': data['title']}):
-            data['title'] = str(uuid.uuid4())  # Regenerate a new title
+            data['title'] = str(uuid.uuid4())  # Regenerate if already exists
 
-        # Insert the document with the unique title
         mongo_collection.insert_one(data)
 
         return jsonify({"message": "Data inserted successfully"})
