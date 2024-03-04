@@ -1,0 +1,129 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Flask API",
+    "description": "API documentation for the Flask application",
+    "version": "1.0"
+  },
+  "basePath": "/",
+  "schemes": [
+    "http"
+  ],
+  "paths": {
+    "/two-phase-commit": {
+      "post": {
+        "summary": "Two-Phase Commit Logic",
+        "description": "Endpoint to execute two-phase commit logic",
+        "responses": {
+          "200": {
+            "description": "Two-Phase Commit Logic executed successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "One or more databases are not ready"
+          }
+        }
+      }
+    },
+    "/content": {
+      "get": {
+        "summary": "Get MongoDB Content",
+        "description": "Endpoint to retrieve content from MongoDB",
+        "responses": {
+          "200": {
+            "description": "List of MongoDB content",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "content": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create MongoDB Content",
+        "description": "Endpoint to create content in MongoDB",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "description": "Content data to be inserted into MongoDB",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "content": {
+                  "type": "string"
+                }
+              },
+              "required": ["title", "content"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Content created successfully in MongoDB"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update MongoDB Content",
+        "description": "Endpoint to update content in MongoDB",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "description": "Content data to be updated in MongoDB",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "content": {
+                  "type": "string"
+                }
+              },
+              "required": ["title", "content"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Content updated successfully in MongoDB"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    }
+  }
+}

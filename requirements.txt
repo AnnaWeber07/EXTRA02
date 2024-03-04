@@ -1,4 +1,8 @@
-Flask==2.0.2
-psycopg==3.1.18
-pymongo==4.0.1
-Werkzeug==2.2.2
+Flask
+flask-cors
+psycopg2-binary
+pymongo
+redis
+flask-swagger-ui
+retry
+requests

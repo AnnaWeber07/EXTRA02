@@ -1,7 +1,6 @@
-version: '3.8'
+version: '3.11'
 
 services:
-  # Microservice
   app:
     build:
       context: .
@@ -10,54 +9,106 @@ services:
       - "5000:5000"
     depends_on:
       - postgres_master
+      - postgres_slave1
+      - postgres_slave2
+      - postgres_slave3
       - mongo_primary
+      - mongo_secondary1
+      - mongo_secondary2
+      - mongo_secondary3
       - redis
+    environment:
+      - DATABASE_URL=postgres://master_user:master_password@postgres_master:5432/master_db
+      - MONGO_URL=mongodb://mongo_primary:27017/content
+      - REDIS_URL=redis://redis:6379/0
 
-  # PostgreSQL databases
   postgres_master:
     image: postgres:latest
     environment:
       POSTGRES_USER: master_user
       POSTGRES_PASSWORD: master_password
       POSTGRES_DB: master_db
+      POSTGRES_INITDB_ARGS: "--data-checksums"
     volumes:
       - postgres_master_data:/var/lib/postgresql/data
+      - ./init_master_slave.sh:/docker-entrypoint-initdb.d/init_master_slave.sh
     ports:
       - "5432:5432"
 
-  postgres_slave:
+  postgres_slave1:
     image: postgres:latest
     environment:
-      POSTGRES_USER: slave_user
-      POSTGRES_PASSWORD: slave_password
-      POSTGRES_DB: slave_db
+      POSTGRES_USER: replication_user
+      POSTGRES_PASSWORD: replication_password
+      POSTGRES_DB: slave_db1
+      POSTGRES_MASTER_HOST: postgres_master
+      POSTGRES_MASTER_PORT: 5432
     volumes:
-      - postgres_slave_data:/var/lib/postgresql/data
+      - postgres_slave1_data:/var/lib/postgresql/data
+      - ./init_master_slave.sh:/docker-entrypoint-initdb.d/init_master_slave.sh
     ports:
       - "5433:5432"
-    deploy:
-      replicas: 4
 
-  # MongoDB databases
+  postgres_slave2:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: replication_user
+      POSTGRES_PASSWORD: replication_password
+      POSTGRES_DB: slave_db2
+      POSTGRES_MASTER_HOST: postgres_master
+      POSTGRES_MASTER_PORT: 5432
+    volumes:
+      - postgres_slave2_data:/var/lib/postgresql/data
+      - ./init_master_slave.sh:/docker-entrypoint-initdb.d/init_master_slave.sh
+    ports:
+      - "5434:5432"
+
+  postgres_slave3:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: replication_user
+      POSTGRES_PASSWORD: replication_password
+      POSTGRES_DB: slave_db3
+      POSTGRES_MASTER_HOST: postgres_master
+      POSTGRES_MASTER_PORT: 5432
+    volumes:
+      - postgres_slave3_data:/var/lib/postgresql/data
+      - ./init_master_slave.sh:/docker-entrypoint-initdb.d/init_master_slave.sh
+    ports:
+      - "5435:5432"
+
   mongo_primary:
     image: mongo:latest
-    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    command: [ "mongod", "--bind_ip_all", "--dbpath=/data/db", "--oplogSize=100" ]
     ports:
       - "27017:27017"
     volumes:
       - mongo_primary_data:/data/db
 
-  mongo_secondary:
+  mongo_secondary1:
     image: mongo:latest
-    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    command: ["mongod", "--bind_ip_all", "--dbpath=/data/db", "--oplogSize=100"]
     ports:
       - "27018:27017"
     volumes:
-      - mongo_secondary_data:/data/db
-    deploy:
-      replicas: 4
+      - mongo_secondary1_data:/data/db
 
-  # Redis cluster
+  mongo_secondary2:
+    image: mongo:latest
+    command: ["mongod", "--bind_ip_all", "--dbpath=/data/db", "--oplogSize=100"]
+    ports:
+      - "27019:27017"
+    volumes:
+      - mongo_secondary2_data:/data/db
+
+  mongo_secondary3:
+    image: mongo:latest
+    command: ["mongod", "--bind_ip_all", "--dbpath=/data/db", "--oplogSize=100"]
+    ports:
+      - "27020:27017"
+    volumes:
+      - mongo_secondary3_data:/data/db
+
   redis:
     image: redis:latest
     ports:
@@ -65,6 +116,10 @@ services:
 
 volumes:
   postgres_master_data:
-  postgres_slave_data:
+  postgres_slave1_data:
+  postgres_slave2_data:
+  postgres_slave3_data:
   mongo_primary_data:
-  mongo_secondary_data:
+  mongo_secondary1_data:
+  mongo_secondary2_data:
+  mongo_secondary3_data:
