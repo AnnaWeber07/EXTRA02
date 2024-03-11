@@ -1,10 +1,12 @@
 version: '3.11'
 
+networks:
+  app-network:
+    driver: bridge
+
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: annachiriciuc07/extra002:app
     ports:
       - "5000:5000"
     depends_on:
@@ -17,102 +19,102 @@ services:
       - mongo_secondary2
       - mongo_secondary3
       - redis
+    networks:
+      - app-network
     environment:
       - DATABASE_URL=postgres://master_user:master_password@postgres_master:5432/master_db
       - MONGO_URL=mongodb://mongo_primary:27017/content
       - REDIS_URL=redis://redis:6379/0
 
   postgres_master:
-    image: postgres:latest
+    image: annachiriciuc07/extra002:postgres-master
     environment:
       POSTGRES_USER: master_user
       POSTGRES_PASSWORD: master_password
       POSTGRES_DB: master_db
       POSTGRES_INITDB_ARGS: "--data-checksums"
-    volumes:
-      - postgres_master_data:/var/lib/postgresql/data
-      - ./init_master_slave.sh:/docker-entrypoint-initdb.d/init_master_slave.sh
     ports:
       - "5432:5432"
+    networks:
+      - app-network
 
   postgres_slave1:
-    image: postgres:latest
+    image: annachiriciuc07/extra002:postgres-slave-1
     environment:
       POSTGRES_USER: replication_user
       POSTGRES_PASSWORD: replication_password
       POSTGRES_DB: slave_db1
       POSTGRES_MASTER_HOST: postgres_master
       POSTGRES_MASTER_PORT: 5432
-    volumes:
-      - postgres_slave1_data:/var/lib/postgresql/data
-      - ./init_master_slave.sh:/docker-entrypoint-initdb.d/init_master_slave.sh
     ports:
       - "5433:5432"
+    networks:
+      - app-network
 
   postgres_slave2:
-    image: postgres:latest
+    image: annachiriciuc07/extra002:postgres-slave-2
     environment:
       POSTGRES_USER: replication_user
       POSTGRES_PASSWORD: replication_password
       POSTGRES_DB: slave_db2
       POSTGRES_MASTER_HOST: postgres_master
       POSTGRES_MASTER_PORT: 5432
-    volumes:
-      - postgres_slave2_data:/var/lib/postgresql/data
-      - ./init_master_slave.sh:/docker-entrypoint-initdb.d/init_master_slave.sh
     ports:
       - "5434:5432"
+    networks:
+      - app-network
 
   postgres_slave3:
-    image: postgres:latest
+    image: annachiriciuc07/extra002:postgres-slave-3
     environment:
       POSTGRES_USER: replication_user
       POSTGRES_PASSWORD: replication_password
       POSTGRES_DB: slave_db3
       POSTGRES_MASTER_HOST: postgres_master
       POSTGRES_MASTER_PORT: 5432
-    volumes:
-      - postgres_slave3_data:/var/lib/postgresql/data
-      - ./init_master_slave.sh:/docker-entrypoint-initdb.d/init_master_slave.sh
     ports:
       - "5435:5432"
+    networks:
+      - app-network
 
   mongo_primary:
-    image: mongo:latest
+    image: annachiriciuc07/extra002:mongo-primary
     command: [ "mongod", "--bind_ip_all", "--dbpath=/data/db", "--oplogSize=100" ]
     ports:
       - "27017:27017"
-    volumes:
-      - mongo_primary_data:/data/db
+    networks:
+      - app-network
 
   mongo_secondary1:
-    image: mongo:latest
+    image: annachiriciuc07/extra002:mongo-secondary-1
     command: ["mongod", "--bind_ip_all", "--dbpath=/data/db", "--oplogSize=100"]
     ports:
       - "27018:27017"
-    volumes:
-      - mongo_secondary1_data:/data/db
+    networks:
+      - app-network
 
   mongo_secondary2:
-    image: mongo:latest
+    image: annachiriciuc07/extra002:mongo-secondary-2
     command: ["mongod", "--bind_ip_all", "--dbpath=/data/db", "--oplogSize=100"]
     ports:
       - "27019:27017"
-    volumes:
-      - mongo_secondary2_data:/data/db
+    networks:
+      - app-network
 
   mongo_secondary3:
-    image: mongo:latest
+    image: annachiriciuc07/extra002:mongo-secondary-3
     command: ["mongod", "--bind_ip_all", "--dbpath=/data/db", "--oplogSize=100"]
     ports:
       - "27020:27017"
-    volumes:
-      - mongo_secondary3_data:/data/db
+    networks:
+      - app-network
 
   redis:
     image: redis:latest
     ports:
       - "6379:6379"
+    networks:
+      - app-network
 
 volumes:
   postgres_master_data:
