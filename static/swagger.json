@@ -1,176 +1,279 @@
 {
-  "openapi": "3.0.0",
+  "swagger": "2.0",
   "info": {
     "title": "Flask API",
-    "version": "1.0.0",
-    "description": "API documentation for the Flask application"
+    "description": "Swagger documentation for the Flask API",
+    "version": "1.0"
   },
-  "servers": [
+  "basePath": "/",
+  "tags": [
     {
-      "url": "http://localhost:5000",
-      "description": "Local development server"
+      "name": "Users",
+      "description": "Operations related to users"
+    },
+    {
+      "name": "Content",
+      "description": "Operations related to content"
+    },
+    {
+      "name": "Coordinator",
+      "description": "Operations related to Two-Phase Commit"
     }
   ],
   "paths": {
     "/users": {
       "get": {
-        "summary": "Get all users",
+        "tags": [
+          "Users"
+        ],
+        "summary": "Get all users from PostgreSQL and MongoDB",
         "responses": {
           "200": {
-            "description": "Returns a JSON object with users from PostgreSQL, MongoDB, and Redis"
-          },
-          "500": {
-            "description": "Internal Server Error"
+            "description": "Returns a list of users from PostgreSQL and MongoDB",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "PostgreSQL Users": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "email": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "MongoDB Users": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "_id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "email": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "Redis Users": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "_id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "email": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       },
       "post": {
-        "summary": "Create a new user",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string"
-                  },
-                  "email": {
-                    "type": "string"
-                  }
+        "tags": [
+          "Users"
+        ],
+        "summary": "Create a new user in PostgreSQL",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
                 },
-                "required": ["name", "email"]
+                "email": {
+                  "type": "string"
+                }
               }
             }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User created successfully"
           },
-          "responses": {
-            "200": {
-              "description": "User created successfully"
-            },
-            "500": {
-              "description": "Internal Server Error"
-            }
+          "500": {
+            "description": "Error creating user"
           }
         }
       },
       "put": {
-        "summary": "Update a user's email",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string"
-                  },
-                  "email": {
-                    "type": "string"
-                  }
+        "tags": [
+          "Users"
+        ],
+        "summary": "Update a user's email in PostgreSQL",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
                 },
-                "required": ["name", "email"]
+                "email": {
+                  "type": "string"
+                }
               }
             }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User updated successfully"
           },
-          "responses": {
-            "200": {
-              "description": "User updated successfully"
-            },
-            "500": {
-              "description": "Internal Server Error"
+          "500": {
+            "description": "Error updating user"
+          }
+        }
+      }
+    },
+    "/mongo-data": {
+      "post": {
+        "tags": [
+          "Content"
+        ],
+        "summary": "Create new content in MongoDB",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "content": {
+                  "type": "string"
+                }
+              }
             }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Data inserted successfully"
+          },
+          "500": {
+            "description": "Error inserting data"
           }
         }
       }
     },
     "/content": {
       "get": {
+        "tags": [
+          "Content"
+        ],
         "summary": "Get all content from MongoDB",
         "responses": {
           "200": {
-            "description": "Returns a JSON array of content from MongoDB"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      },
-      "post": {
-        "summary": "Create new content in MongoDB",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
+            "description": "Returns a list of content from MongoDB",
+            "schema": {
+              "type": "array",
+              "items": {
                 "type": "object",
                 "properties": {
-                  "name": {
+                  "_id": {
                     "type": "string"
                   },
-                  "email": {
-                    "type": "string"
-                  },
-                  "title": {
-                    "type": "string"
-                  }
-                },
-                "required": ["name", "email", "title"]
-              }
-            }
-          },
-          "responses": {
-            "200": {
-              "description": "Data inserted successfully"
-            },
-            "500": {
-              "description": "Internal Server Error"
-            }
-          }
-        }
-      },
-      "put": {
-        "summary": "Update content in MongoDB",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
                   "title": {
                     "type": "string"
                   },
                   "content": {
                     "type": "string"
                   }
-                },
-                "required": ["title", "content"]
+                }
               }
             }
-          },
-          "responses": {
-            "200": {
-              "description": "Content updated successfully"
-            },
-            "500": {
-              "description": "Internal Server Error"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Content"
+        ],
+        "summary": "Update content in MongoDB",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "content": {
+                  "type": "string"
+                }
+              }
             }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Content updated successfully"
+          },
+          "500": {
+            "description": "Error updating content"
           }
         }
       }
     },
     "/two-phase-commit": {
       "post": {
-        "summary": "Execute two-phase commit logic",
+        "tags": [
+          "Coordinator"
+        ],
+        "summary": "Check status for Two-Phase Commit",
         "responses": {
           "200": {
-            "description": "Two-phase commit logic executed successfully"
+            "description": "Can commit, 200 OK"
           },
-            "500": {
-              "description": "Some database is running wild... catch it before you POST smth"
+          "500": {
+            "description": "Cannot commit, offline databases listed",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string"
+                },
+                "offline_databases": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
             }
+          }
         }
       }
     }

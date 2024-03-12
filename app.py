@@ -60,26 +60,6 @@ def check_redis():
         print("Error connecting to Redis:", str(e))
         return False
 
-# Check if PostgreSQL is available
-def check_postgres():
-    try:
-        cursor = postgres_master_conn.cursor()
-        cursor.execute("SELECT 1")
-        cursor.close()
-        return True
-    except Exception as e:
-        print("Error connecting to PostgreSQL:", str(e))
-        return False
-
-# Check if MongoDB is available
-def check_mongo():
-    try:
-        mongo_db.command('ping')
-        return True
-    except Exception as e:
-        print("Error connecting to MongoDB:", str(e))
-        return False
-
 # Replicate data to PostgreSQL slave after each request
 def replicate_postgres_data():
     try:
@@ -200,6 +180,56 @@ def get_content():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+@app.route('/content', methods=['PUT'])
+def update_content():
+    try:
+        data = request.json
+        query = {"title": data['title']}
+        new_values = {"$set": {"content": data['content']}}
+        mongo_collection.update_one(query, new_values)
+        return jsonify({"message": "Content updated successfully"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+def check_postgres():
+    try:
+        cursor = postgres_master_conn.cursor()
+        cursor.execute("SELECT 1")
+        cursor.close()
+        return True
+    except Exception as e:
+        print("Error connecting to PostgreSQL:", str(e))
+        return False
+
+def check_mongo():
+    try:
+        mongo_db.command('ping')
+        return True
+    except Exception as e:
+        print("Error connecting to MongoDB:", str(e))
+        return False
+
+def two_phase_commit():
+    postgres_status = check_postgres()
+    mongo_status = check_mongo()
+
+    if postgres_status and mongo_status:
+        return jsonify({"status": "can commit, 200 OK"})
+    elif not postgres_status and not mongo_status:
+        return jsonify({"status": "cannot commit", "offline_databases": ["PostgreSQL", "MongoDB"]}), 500
+    elif not postgres_status:
+        return jsonify({"status": "cannot commit", "offline_databases": ["PostgreSQL"]}), 500
+    elif not mongo_status:
+        return jsonify({"status": "cannot commit", "offline_databases": ["MongoDB"]}), 500
+
+# Coordinator endpoint
+@app.route('/two-phase-commit', methods=['POST'])
+def two_phase_commit_endpoint():
+    try:
+        return two_phase_commit()
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 @app.route('/mongo-data', methods=['POST'])
 def create_mongo_data():
     try:
@@ -215,38 +245,7 @@ def create_mongo_data():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/content', methods=['PUT'])
-def update_content():
-    try:
-        data = request.json
-        query = {"title": data['title']}
-        new_values = {"$set": {"content": data['content']}}
-        mongo_collection.update_one(query, new_values)
-        return jsonify({"message": "Content updated successfully"})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
 # Coordinator endpoint
-@app.route('/two-phase-commit', methods=['POST'])
-def two_phase_commit():
-    try:
-        postgres_status = check_postgres()
-        mongo_status = check_mongo()
-
-        if postgres_status and mongo_status:
-            return jsonify ( {"status": "can commit, 200 OK"} )
-        elif not postgres_status and not mongo_status:
-            return jsonify ( {"status": "cannot commit", "offline_databases": ["PostgreSQL", "MongoDB"]} ), 500
-        elif not postgres_status:
-            return jsonify ( {"status": "cannot commit", "offline_databases": ["PostgreSQL"]} ), 500
-        elif not mongo_status:
-            return jsonify ( {"status": "cannot commit", "offline_databases": ["MongoDB"]} ), 500
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-
 
 # Swagger UI Blueprint
 SWAGGER_URL = '/swagger'
