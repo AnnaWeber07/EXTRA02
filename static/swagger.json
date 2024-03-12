@@ -167,7 +167,10 @@
         "responses": {
           "200": {
             "description": "Two-phase commit logic executed successfully"
-          }
+          },
+            "500": {
+              "description": "Some database is running wild... catch it before you POST smth"
+            }
         }
       }
     }

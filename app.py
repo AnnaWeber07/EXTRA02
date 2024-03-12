@@ -229,8 +229,24 @@ def update_content():
 # Coordinator endpoint
 @app.route('/two-phase-commit', methods=['POST'])
 def two_phase_commit():
-    # Implement your two-phase commit logic here
-    return jsonify({"message": "Two-phase commit logic executed successfully"})
+    try:
+        postgres_status = check_postgres()
+        mongo_status = check_mongo()
+
+        if postgres_status and mongo_status:
+            return jsonify ( {"status": "can commit, 200 OK"} )
+        elif not postgres_status and not mongo_status:
+            return jsonify ( {"status": "cannot commit", "offline_databases": ["PostgreSQL", "MongoDB"]} ), 500
+        elif not postgres_status:
+            return jsonify ( {"status": "cannot commit", "offline_databases": ["PostgreSQL"]} ), 500
+        elif not mongo_status:
+            return jsonify ( {"status": "cannot commit", "offline_databases": ["MongoDB"]} ), 500
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
 
 # Swagger UI Blueprint
 SWAGGER_URL = '/swagger'
